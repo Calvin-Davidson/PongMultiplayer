@@ -35,10 +35,12 @@
   let spelerSize = {};
 
   socket.on("setup", function(size) {
+    console.log("setup!");
     spelerSize = size;
   });
   
   socket.on("clearScreen", function() {
+    console.log("cleared");
     context.beginPath();
     context.fillStyle = "#00ff00";
     context.fillRect(0,0, width, height);
@@ -53,7 +55,7 @@
   });
 
     socket.on("moveball", function(ballx, bally, ballr) {
-  
+    console.log("ball move");
     context.beginPath();
     context.fillStyle = "#990099"; 
     context.arc(ballx, bally, ballr, 0, Math.PI * 2);
