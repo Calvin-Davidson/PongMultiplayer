@@ -23,7 +23,7 @@ let ball = {}
 ball.x = 200;
 ball.y = 200;
 ball.radius = 10;
-ball.speed = 30;
+ball.speed = 90;
 ball.velY = -0.1;
 ball.velX = -0.1;
 
@@ -82,6 +82,7 @@ http.listen(3000, function(){
 });
 
 io.on('connection', function(socket){
+
   if (speler1.id == null) speler1.id = socket.id;
   else if (speler2.id == null) speler2.id = socket.id;
 
@@ -95,7 +96,6 @@ io.on('connection', function(socket){
       speler2.y = y;
     }
   });
-
 
   draw = function() {
     io.emit("clearScreen");
