@@ -27,15 +27,17 @@
   const canvas = document.querySelector('canvas');
   let context = canvas.getContext('2d');
 
-  canvas.width = 500;
+  canvas.width = 750;
   canvas.height = 500;
   let width = canvas.width;
   let height = canvas.height;
 
-  player1 = {};
-  player2 = {};
-  ball = {};
+  let spelerSize = {};
 
+  socket.on("setup", function(size) {
+    spelerSize = size;
+  });
+  
   socket.on("clearScreen", function() {
     context.beginPath();
     context.fillStyle = "#00ff00";
@@ -44,25 +46,27 @@
   });
 
   socket.on("moveplayers", function(speler1, speler2) {
-    player1 = this.speler1;
-    player2 = this.speler2;
-    
       context.fillStyle = "#000000";
-      context.fillRect(speler1.x, speler1.y, speler1.width, speler1.height);
+      context.fillRect(speler1.x, speler1.y, spelerSize.width, spelerSize.height);
       context.fillStyle = "#000000";
-      context.fillRect(speler2.x, speler2.y, speler2.width, speler2.height);
+      context.fillRect(speler2.x, speler2.y, spelerSize.width, spelerSize.height);
   });
 
-    socket.on("moveball", function(Ball) {
-      ball = Ball;
-    
+    socket.on("moveball", function(ballx, bally, ballr) {
+  
     context.beginPath();
     context.fillStyle = "#990099"; 
-    context.arc(Ball.x, Ball.y, Ball.radius, 0, Math.PI * 2);
+    context.arc(ballx, bally, ballr, 0, Math.PI * 2);
     context.stroke();
     context.closePath();
   });
 
+
+
+document.addEventListener('mousemove', function(e){
+    let y = e.clientY;
+    socket.emit('mousemove', y);
+  });
 
 </script>
 
