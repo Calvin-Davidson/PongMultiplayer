@@ -14,28 +14,28 @@ spelerSize.height = 100;
 
 makeGame = function() {
   let game = {};
-  
+
   game.speler1 = {};
   game.speler1.id = null;
   game.speler1.x = 20;
   game.speler1.y = 250;
-  game.speler1.score = 0;
 
   game.speler2 = {};
   game.speler2.id = null;
   game.speler2.x = width - 40;
   game.speler2.y = 250;
-  game.speler2.score = 0;
 
   game.ball = {};
   game.ball.x = 200;
   game.ball.y = 200;
   game.ball.radius = 10;
-  game.ball.speed = 45;
+  game.ball.speed = 90;
   game.ball.velY = -0.1;
   game.ball.velX = -0.1;
 
   game.ball.update = function() {
+    console.log("ball updating")
+
     for (let x = 0; x < this.speed; x++) {
       game.ball.collisionCheck();
       game.ball.x += this.velX;
@@ -56,24 +56,14 @@ makeGame = function() {
     }
 
     // wanneer er gescoord word.
-    if (game.ball.x - game.ball.radius <= 0 || game.ball.x + game.ball.radius >= width) {
-
-      if (game.ball.x - game.ball.radius <= 0) {
-          game.speler2.score += 1;
-          io.to(game.speler1.id).emit("scoreUpdate", game.speler1.score, game.speler2.score);
-          io.to(game.speler2.id).emit("scoreUpdate", game.speler1.score, game.speler2.score);
-          console.log(game.speler2.score);
-        } else {
-          game.speler1.score += 1;
-          io.to(game.speler1.id).emit("scoreUpdate", game.speler1.score, game.speler2.score);
-          io.to(game.speler2.id).emit("scoreUpdate", game.speler1.score, game.speler2.score);
-          console.log(game.speler1.score);
-        }
-
-        game.ball.velY = -game.ball.velY;
-        game.ball.velX = -game.ball.velX;
-        game.ball.x = width / 2;
-        game.ball.y = height / 2;
+    if (
+      game.ball.x - game.ball.radius <= 0 ||
+      game.ball.x + game.ball.radius >= width
+    ) {
+      game.ball.velY = -game.ball.velY;
+      game.ball.velX = -game.ball.velX;
+      game.ball.x = width / 2;
+      game.ball.y = height / 2;
     }
 
     // De collisions van de speler zelf.
@@ -130,12 +120,10 @@ io.on("connection", function(socket) {
           console.log(socket.id + "joined the game with id " + i + " player 1");
           games[i].speler1.id = socket.id;
           foundgame = true;
-          io.to(socket.id).emit("setup", spelerSize, games[i].speler1, games[i].speler2, games[i].ball.x, games[i].ball.y, games[i].ball.radius);
         } else if (games[i].speler2.id == null) {
           console.log(socket.id + "joined the game with id " + i + " player 2");
           games[i].speler2.id = socket.id;
           foundgame = true;
-          io.to(socket.id).emit("setup", spelerSize, games[i].speler1, games[i].speler2, games[i].ball.x, games[i].ball.y, games[i].ball.radius);
         }
       }
     }
@@ -147,18 +135,17 @@ io.on("connection", function(socket) {
             if (games[i].speler1.id == null) {
               console.log(socket.id + "joined the game with id " + i + " player 1");
               games[i].speler1.id = socket.id;
-              io.to(socket.id).emit("setup", spelerSize, games[i].speler1, games[i].speler2, games[i].ball.x, games[i].ball.y, games[i].ball.radius);
+              foundgame = true;
             } else if (games[i].speler2.id == null) {
               console.log(socket.id + "joined the game with id " + i + " player 2");
               games[i].speler2.id = socket.id;
-              io.to(socket.id).emit("setup", spelerSize, games[i].speler1, games[i].speler2, games[i].ball.x, games[i].ball.y, games[i].ball.radius);
+              foundgame = true;
             }
           }
         }
     }
   }
-
-
+  io.to(socket.id).emit("setup", spelerSize);
 
   socket.on("mousemove", function(y) {
     for (let i = 0; i < games.length; i++) {
@@ -172,17 +159,53 @@ io.on("connection", function(socket) {
     }
   });
 
-  updateVariables = function() {
+  draw = function() {
     for (let i = 0; i < games.length; i++) {
       // als de game genoeg spelers heeft.
       if (games[i].speler1.id != null && games[i].speler2.id != null) {
-        
+        io.to(games[i].speler1.id).emit("clearScreen");
+        io.to(games[i].speler2.id).emit("clearScreen");
+        io.to(games[i].speler1.id).emit(
+          "moveplayers",
+          games[i].speler1,
+          games[i].speler2
+        );
+
+        io.to(games[i].speler2.id).emit(
+          "moveplayers",
+          games[i].speler1,
+          games[i].speler2
+        );
+
         games[i].ball.update();
-        socket.to(games[i].speler1.id).emit("updateVariables", games[i].speler1.x, games[i].speler1.y, games[i].speler2.x, games[i].speler2.y, games[i].ball.x, games[i].ball.y);
-        socket.to(games[i].speler2.id).emit("updateVariables", games[i].speler1.x, games[i].speler1.y, games[i].speler2.x, games[i].speler2.y, games[i].ball.x, games[i].ball.y);
+        io.to(games[i].speler1.id).emit(
+          "moveball",
+          games[i].ball.x,
+          games[i].ball.y,
+          games[i].ball.radius
+        );
+
+        io.to(games[i].speler2.id).emit(
+          "moveball",
+          games[i].ball.x,
+          games[i].ball.y,
+          games[i].ball.radius
+        );
+    }}
+  };
+
+  
+  function draw() {
+    for(let i = 0; i < games.length; i++) {
+      if (games[i].speler1.id === socket.id) {
+        draw(i);
+      }
+      if (games[i].speler1.id === socket.id) {
+        draw(i);
+      } 
     }
-  }
 }
-setInterval(updateVariables, 10);
+
+window.requestAnimationFrame(draw)
 
 });

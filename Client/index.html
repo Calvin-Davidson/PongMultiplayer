@@ -27,41 +27,91 @@
   const canvas = document.querySelector('canvas');
   let context = canvas.getContext('2d');
 
-  canvas.width = 750;
-  canvas.height = 500;
+  canvas.width = 1250;
+  canvas.height = 800;
   let width = canvas.width;
   let height = canvas.height;
 
   let spelerSize = {};
 
-  socket.on("setup", function(size) {
+  let speler1 = {};
+  speler1.x = 0;
+  speler1.y = 0;
+  speler1.score = 0;
+
+  let speler2 = {};
+  speler2.x = 0;
+  speler2.y = 0;
+  speler2.score = 0;
+
+  let ball = {};
+  ball.x = 0;
+  ball.y = 0;
+  ball.r = 0;
+
+  socket.on("setup", function(size, sp1, sp2, bx, by, br) {
     console.log("setup!");
     spelerSize = size;
+    speler1 = sp1;
+    speler2 = sp2;
+
+    ball.x = bx;
+    ball.y = by;
+    ball.r = br;
   });
   
-  socket.on("clearScreen", function() {
-    console.log("cleared");
-    context.beginPath();
+  socket.on("scoreUpdate", function(p1Score, p2Score) {
+    speler1.score = p1Score;
+    speler2.score = p2Score;
+  });
+
+  let started = false;
+  socket.on("updateVariables", function(sp1X, sp1Y, sp2X, sp2Y, ballX, ballY) {
+    speler1.x = sp1X;
+    speler1.y = sp1Y;
+
+    speler2.x = sp2X;
+    speler2.y = sp2Y;
+
+    ball.x = ballX;
+    ball.y = ballY;
+
+    if (started == false) {
+      window.requestAnimationFrame(draw)
+      started = true;
+    }
+  });
+
+
+
+draw = function() {
+
     context.fillStyle = "#00ff00";
     context.fillRect(0,0, width, height);
-    context.closePath();
-  });
 
-  socket.on("moveplayers", function(speler1, speler2) {
-      context.fillStyle = "#000000";
-      context.fillRect(speler1.x, speler1.y, spelerSize.width, spelerSize.height);
-      context.fillStyle = "#000000";
-      context.fillRect(speler2.x, speler2.y, spelerSize.width, spelerSize.height);
-  });
+    context.fillStyle = "#000000";
+    context.font = "50px Arial";
+    context.fillText(speler1.score + " - " + speler2.score, width/2 - 50, height/2-50);
 
-    socket.on("moveball", function(ballx, bally, ballr) {
-    console.log("ball move");
+    context.fillStyle = "#000000";
+    context.fillRect(speler1.x, speler1.y, spelerSize.width, spelerSize.height);
+    context.fillStyle = "#000000";
+    context.fillRect(speler2.x, speler2.y, spelerSize.width, spelerSize.height);
+
     context.beginPath();
     context.fillStyle = "#990099"; 
-    context.arc(ballx, bally, ballr, 0, Math.PI * 2);
+    context.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
     context.stroke();
     context.closePath();
-  });
+
+  requestAnimationFrame(draw);
+}
+
+    {
+      console.log("waiting for players")
+      context.font = "100px Arial";
+      context.fillText("Wachten op tegenstander", 200 , 200);
+    }
 
 document.addEventListener('mousemove', function(e){
     let y = e.clientY;

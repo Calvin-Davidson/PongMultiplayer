@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>01_huisje</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        document.onmousemove = function(e){
+        var x = e.pageX;
+        var y = e.pageY;
+        document.title = "X: " + x + "  Y: " + y;
+        };
+        </script>
+
+
+</body>
+
+  <script src="/socket.io/socket.io.js"></script>
+
+<script>
+  var socket = io();
+
+  const canvas = document.querySelector('canvas');
+  let context = canvas.getContext('2d');
+
+  canvas.width = 1250;
+  canvas.height = 800;
+  let width = canvas.width;
+  let height = canvas.height;
+
+  let spelerSize = {};
+
+  socket.on("setup", function(size) {
+    console.log("setup!");
+    spelerSize = size;
+  });
+  
+  socket.on("clearScreen", function() {
+    context.beginPath();
+    context.fillStyle = "#00ff00";
+    context.fillRect(0,0, width, height);
+    context.closePath();
+  });
+
+  socket.on("moveplayers", function(speler1, speler2) {
+      context.fillStyle = "#000000";
+      context.fillRect(speler1.x, speler1.y, spelerSize.width, spelerSize.height);
+      context.fillStyle = "#000000";
+      context.fillRect(speler2.x, speler2.y, spelerSize.width, spelerSize.height);
+  });
+
+    socket.on("moveball", function(ballx, bally, ballr) {
+    console.log("ball move");
+    context.beginPath();
+    context.fillStyle = "#990099"; 
+    context.arc(ballx, bally, ballr, 0, Math.PI * 2);
+    context.stroke();
+    context.closePath();
+
+    socket.emit("drawAgain");
+  });
+
+document.addEventListener('mousemove', function(e){
+    let y = e.clientY;
+    socket.emit('mousemove', y);
+  });
+
+</script>
+
+</html>
